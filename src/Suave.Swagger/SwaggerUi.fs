@@ -1,4 +1,4 @@
-module Giraffe.SwaggerUi
+module Suave.SwaggerUi
 
 open System
 open System.Collections.Generic
