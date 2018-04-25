@@ -84,7 +84,6 @@ module Dsl =
             SwaggerUrl="/swagger.json"
             SwaggerUiUrl="/swaggerui/"}
   
-  //type swaggerOf ([<ReflectedDefinition(true)>] webappWithVal:Expr<HttpFunc -> HttpContext -> HttpFuncResult>) =
   type swaggerOf ([<ReflectedDefinition(true)>] webappWithVal:Expr<WebPart>) =
     member __.Documents (configuration:DocumentationConfig->DocumentationConfig) =
       match webappWithVal with 
@@ -100,7 +99,7 @@ module Dsl =
                   Suave.SwaggerUi.swaggerUiWebPart config.SwaggerUiUrl config.SwaggerUrl
                   app
             ]
-      | other ->
+      | _ ->
           failwith "Invalid arg"
 
   let withConfig configuration (s:swaggerOf) =

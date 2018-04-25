@@ -1,7 +1,6 @@
 module Suave.SwaggerUi
 
 open System
-open System.Collections.Generic
 open System.IO
 open System.IO.Compression
 open Suave
@@ -9,16 +8,8 @@ open Suave.Operators
 open Suave.Filters
 open Suave.Writers
 open Suave.Sockets.Control
-open Suave.Successful
-open Suave.Logging
-open Suave.EventSource
-open Suave.Files
-open Suave.State.CookieStateStore
 open Suave.Sockets.AsyncSocket
-open Suave.Filters
 open Suave.RequestErrors
-open System.Xml.Serialization
-open Suave.Sockets
 
 let combineUrls (u1:string) (u2:string) =
     let sp = if u2.StartsWith "/" then u2.Substring 1 else u2
