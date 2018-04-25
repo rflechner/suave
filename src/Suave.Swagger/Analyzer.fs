@@ -1,21 +1,8 @@
 namespace Suave.Swagger
 
-open Suave
 open System
-open System.Linq.Expressions
 open System.Reflection
-open Microsoft.FSharp.Quotations
-open Quotations.DerivedPatterns
-open Quotations.ExprShape
 open Quotations.Patterns
-open Microsoft.FSharp.Reflection
-open FSharp.Quotations.Evaluator
-open Microsoft.AspNetCore.Http
-open System.Collections.Generic
-open Newtonsoft
-open Newtonsoft.Json
-open Newtonsoft.Json.Serialization
-open Newtonsoft.Json.Linq
 open Common
 
 module Analyzer =
