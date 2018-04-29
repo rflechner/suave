@@ -219,13 +219,13 @@ module Analyzer =
       let methodCalls = 
         [ 
           // simple route
-          { ModuleName="Routing"; FunctionName="route" }, 
+          { ModuleName="Filters"; FunctionName="path" }, 
               (fun ctx -> ctx.Variables.Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
-          { ModuleName="Routing"; FunctionName="routeCi" }, 
+          { ModuleName="Filters"; FunctionName="pathCi" }, 
               (fun ctx -> ctx.Variables.Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
           
           // route format
-          { ModuleName="Routing"; FunctionName="routef" }, 
+          { ModuleName="Filters"; FunctionName="pathScan" }, 
               (fun ctx -> 
                 let path = ctx.Variables.Item "pathFormat" :?> PathFormat
                 let parameters = 
@@ -259,15 +259,15 @@ module Analyzer =
               )
   
           // HTTP GET method
-          { ModuleName="Core"; FunctionName="GET" }, (fun ctx -> { ctx with Verb = (Some "GET") })
+          { ModuleName="Filters"; FunctionName="GET" }, (fun ctx -> { ctx with Verb = (Some "GET") })
           // HTTP POST method
-          { ModuleName="Core"; FunctionName="POST" }, (fun ctx -> { ctx with Verb = (Some "POST") })
+          { ModuleName="Filters"; FunctionName="POST" }, (fun ctx -> { ctx with Verb = (Some "POST") })
           // HTTP PUT method
-          { ModuleName="Core"; FunctionName="PUT" }, (fun ctx -> { ctx with Verb = (Some "PUT") })
+          { ModuleName="Filters"; FunctionName="PUT" }, (fun ctx -> { ctx with Verb = (Some "PUT") })
           // HTTP DELETE method
-          { ModuleName="Core"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
+          { ModuleName="Filters"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
           // HTTP PATCH method
-          { ModuleName="Core"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
+          { ModuleName="Filters"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
           
           { ModuleName="Dsl"; FunctionName="operationId" }, (handleSingleArgRule "opId" "operationId")
           { ModuleName="Dsl"; FunctionName="consumes" }, (handleSingleArgRule "modelType" "consumes")
@@ -297,12 +297,17 @@ module Analyzer =
   
       let analyzeAll exps c =
         exps |> Seq.fold (fun state e -> loop e state) c
-  
+      
+    //   printfn "exp: %A" exp
+    //   failwithf "exp: %A" exp
       match exp with
       | Value (o,_) -> 
           ctx.AddArgType (o.GetType())
-      
-      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "Core" ->
+      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) ->
+          printfn "v = %A" v
+          ctx
+      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) 
+            when m.Name = "choose" -> // && v.Name = "handlers" -> //&& m.DeclaringType.Name = "Suave.WebPart" ->
           let ctxs = handlers |> List.map(fun e -> loop e ctx)
           { ctx 
               with 
@@ -353,6 +358,10 @@ module Analyzer =
           let c4 = rules.ApplyMethodCall method.DeclaringType.Name method.Name c3
           c4 |> pushRoute |> mergeWith ctx |> pushRoute
       
+      | Call (None, op, [exp1]) when op.Name = "op_GreaterEqualsGreater" ->
+          let c1 = loop exp1 (newContext())
+          let c = ctx |> pushRoute |> mergeWith c1 |> pushRoute
+          c
       | Application (Application (PropertyGet (None, op, []), exp1 ), ValueWithName _) when op.Name = "op_GreaterEqualsGreater" ->
           let c1 = loop exp1 (newContext())
           let c = ctx |> pushRoute |> mergeWith c1 |> pushRoute
@@ -378,7 +387,7 @@ module Analyzer =
               { ctx with Routes = (ctx.Routes @ routes) }
           | _ -> ctx
           
-      | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "Core" ->
+      | Call(instance, method, args) when method.Name = "choose" -> //&& method.DeclaringType.Name = "Suave.WebPart" ->
           let ctxs = args |> List.map(fun e -> loop e (newContext()))
           { ctx 
               with 

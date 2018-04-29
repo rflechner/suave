@@ -13,18 +13,22 @@ open Suave.Writers
 open Suave.Files
 open Suave.Successful
 open Suave.State.CookieStateStore
+open Suave.Swagger
+open Suave.Swagger.Dsl
 
-let app =
-  choose [
-    GET >=> choose
-      [ path "/hello" >=> OK "Hello GET" ; path "/goodbye" >=> OK "Good bye GET" ];
-    POST >=> choose
-      [ path "/hello" >=> OK "Hello POST" ; path "/goodbye" >=> OK "Good bye POST" ];
-    DELETE >=> choose
-      [ path "/hello" >=> OK "Hello DELETE" ; path "/goodbye" >=> OK "Good bye DELETE" ];
-    PUT >=> choose
-      [ path "/hello" >=> OK "Hello PUT" ; path "/goodbye" >=> OK "Good bye PUT" ];
-  ]
+let doc = 
+  swaggerOf (
+    choose
+      [ GET >=> choose
+          [ path "/hello" >=> OK "Hello GET" ; path "/goodbye" >=> OK "Good bye GET" ];
+        POST >=> choose
+          [ path "/hello" >=> OK "Hello POST" ; path "/goodbye" >=> OK "Good bye POST" ];
+        DELETE >=> choose
+          [ path "/hello" >=> OK "Hello DELETE" ; path "/goodbye" >=> OK "Good bye DELETE" ];
+        PUT >=> choose
+          [ path "/hello" >=> OK "Hello PUT" ; path "/goodbye" >=> OK "Good bye PUT" ];
+      ])
+let documentedApp = doc.Documents (fun _ -> DocumentationConfig.Default)
 
 let loggingOptions =
   { Literate.LiterateOptions.create() with
@@ -58,6 +62,6 @@ let main argv =
       tlsProvider           = new DefaultTlsProvider()
       hideHeader            = false
       maxContentLength      = 1000000 }
-    app
+      documentedApp
   0
 

@@ -21,14 +21,14 @@ open System.Text
 module Dsl =
 // used to facilitate quotation expression analysis
   //let (==>) = (>=>)
-  
+
   let operationId (opId:string) next = next
   let consumes (modelType:Type) next = next
   let produces (modelType:Type) next = next
-  
+
   let definitionOfType (t:Type) =
     t.Describes()
-  
+
   let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) schemes host basePath =
     let rawJson (str : string) : WebPart =
         fun ctx ->
@@ -44,15 +44,15 @@ module Dsl =
                   }
           } |> succeed
     let paths = documentRoutes docCtx.Routes addendums
-    let definitions = 
+    let definitions =
       paths
       |> Seq.collect(
-           fun p -> 
-              p.Value 
+           fun p ->
+              p.Value
                 |> Seq.collect (
-                     fun v -> 
-                        v.Value.Responses |> Seq.choose(fun r -> r.Value.Schema) 
-                         |> Seq.collect(fun d -> d.FlattenComplexDefinitions()))) 
+                     fun v ->
+                        v.Value.Responses |> Seq.choose(fun r -> r.Value.Schema)
+                         |> Seq.collect(fun d -> d.FlattenComplexDefinitions())))
       |> Seq.toList
       |> List.distinct
     let doc =
@@ -83,18 +83,18 @@ module Dsl =
             DocumentationAddendums=DefaultDocumentationAddendumProvider
             SwaggerUrl="/swagger.json"
             SwaggerUiUrl="/swaggerui/"}
-  
+
   type swaggerOf ([<ReflectedDefinition(true)>] webappWithVal:Expr<WebPart>) =
     member __.Documents (configuration:DocumentationConfig->DocumentationConfig) =
-      match webappWithVal with 
-      | WithValue(v, ty, webapp) -> 
+      match webappWithVal with
+      | WithValue(v, ty, webapp) ->
           let app = unbox<WebPart> v
           let config = configuration DocumentationConfig.Default
           let rules = { AppAnalyzeRules.Default with MethodCalls=(config.MethodCallRules AppAnalyzeRules.Default.MethodCalls) }
           let docCtx = analyze webapp rules
           let webPart = swaggerDoc docCtx config.DocumentationAddendums config.Description config.Schemes config.Host config.BasePath
           let swaggerJson = path config.SwaggerUrl >=> webPart
-          choose [ 
+          choose [
                   swaggerJson
                   Suave.SwaggerUi.swaggerUiWebPart config.SwaggerUiUrl config.SwaggerUrl
                   app
@@ -104,4 +104,3 @@ module Dsl =
 
   let withConfig configuration (s:swaggerOf) =
     s.Documents configuration
-         
